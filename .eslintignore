@@ -1,0 +1,3 @@
+test/*.test.js
+lab.config.js
+dist/

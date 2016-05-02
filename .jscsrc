@@ -1,0 +1,6 @@
+{
+  "preset": "airbnb",
+  "verbose": true,
+  "esnext": true,
+  "excludeFiles": ["test/*.test.js", "app/**/*.test.js", "lab.config.js"]
+}
