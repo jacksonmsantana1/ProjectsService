@@ -16,6 +16,8 @@
     "server": "npm run build && node ./dist/server.js"
   },
   "repository": {
+    "type": "git",
+    "url": "git@github.com:jacksonmsantana1/ProjectsService.git"
   },
   "keywords": [
     "web",
@@ -23,6 +25,7 @@
   ],
   "author": "jackson.m.santana1",
   "bugs": {
+    "url": "https://github.com/jacksonmsantana1/ProjectsService/issues"
   },
   "standard": {
     "parser": "babel-eslint"

@@ -8,8 +8,8 @@ server.connection({
   port: 8000,
 });
 
-server.auth.scheme('token', require('./app/plugins/auth/auth'));
-server.auth.strategy('default', 'token');
+//server.auth.scheme('token', require('./app/plugins/auth/auth'));
+//server.auth.strategy('default', 'token');
 
 const goodConfig = {
   reporters: [{
@@ -31,9 +31,7 @@ const goodConfig = {
     reporter: require('good-file'),
     events: {
       log: '*',
-      request: [
-	'INFO',
-      ],
+      request: ['INFO'],
       reponse: '*',
     },
   }, {
@@ -87,7 +85,7 @@ const routeStart = () => server.route([{
   method: 'GET',
   path: '/projects',
   config: {
-    auth: 'default',
+    //auth: 'default',
     description: 'Retrieve the patchworks projects',
     tags: ['projects', 'patchwork'],
     validate: {
