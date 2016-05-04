@@ -88,18 +88,28 @@ const routeStart = () => server.route([{
     //auth: 'default',
     description: 'Retrieve the patchworks projects',
     tags: ['projects', 'patchwork'],
-    validate: {
-      params: {
-        index: Joi.string().required(),
-      },
-    },
     cors: {
       origin: ['http://localhost:8080'], //FIXME Remove in production
+    },
+    validate: {
+      query: {
+        quantity: Joi.number().required(),
+      },
     },
   },
   handler: require('./app/handlers/GET/projects/'),
 },
 ]);
+
+/*******************************Methods***********************************/
+
+server.method({
+  name: 'authenticate',
+  method: require('./app/plugins/auth/auth').authenticate,
+  options: {
+    callback: false,
+  },
+});
 
 /**********************************Start***********************************/
 const start = () => {

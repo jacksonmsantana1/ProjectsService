@@ -192,8 +192,9 @@ describe('AUTH', () => {
     requestMock.raw.req.headers.authorization = tokenHeader(userId);
 
     auth(requestMock).then((res) => {
-      console.log(res);
-      expect(res.credentials.id).to.be.equal(userId);
+      expect(res.auth.isAuthenticated).to.be.equal(true);
+      expect(res.auth.credentials.id).to.be.equal(userId);
+      expect(res.id).to.be.equal(requestMock.id);
       done();
     });
   });

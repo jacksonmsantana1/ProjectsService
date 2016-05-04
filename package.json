@@ -6,6 +6,7 @@
   "author": "jackson.m.santana1",
   "license": "ISC",
   "scripts": {
+    "tdd": "lab -T node_modules/lab-babel -t 100 -v -l --coverage-exclude node_modules --coverage-exclude dist",
     "test": "npm run lint && lab -T node_modules/lab-babel -t 100 -v -l --coverage-exclude node_modules --coverage-exclude dist",
     "jscs": "jscs ./  --no-ignore ",
     "eslint": "eslint ./ --ext .js",

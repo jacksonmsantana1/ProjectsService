@@ -54,7 +54,14 @@ const _authenticate = (request) => (new Promise((resolve, reject) => {
     } else if (!!decoded) {
       request.log('AUTH',
         logMessage(request.id, true, decoded.id, req.url, 'Authentication Passed'));
-      resolve({ credentials: decoded });
+
+      //FIXME set the request auth object manually
+      /*eslint no-param-reassign:1*/
+      request.auth = {
+        credentials: decoded,
+        isAuthenticated: true,
+      };
+      resolve(request);
     }
   });
 }));
