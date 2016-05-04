@@ -22,17 +22,20 @@ const isUserValid = (request) =>
       .catch((notOk) => reject(Boom.unauthorized('Invalid User')));
   });
 
-//getProjects ::
+// getProjects ::
 const getProjects = require('../../../Project/index').getProjects;
 
-// sendResponse :: Response -> [Project] -> Response([Project])
-const sendResponse = curry((response, projects) => {
-  response(projects);
+// reply :: Response -> [Project] -> Response([Project])
+const response = require('../../../plugins/auth/auth').response;
+
+// sendResponse :: Request -> Response -> [Project] -> Response([Project])
+const sendResponse = curry((request, reply, projects) => {
+  response(request, reply, projects);
 });
 
 // sendError :: Response -> Error -> Response(Error)
-const sendError = curry((response, err) => {
-  response(err);
+const sendError = curry((reply, err) => {
+  reply(err);
 });
 
 module.exports = (request, reply) => {
@@ -44,6 +47,6 @@ module.exports = (request, reply) => {
     .then(get('query'))
     .then(get('quantity'))
     .then(getProjects(collection))
-    .then(sendResponse(reply))
+    .then(sendResponse(request, reply))
     .catch(sendError(reply));
 };

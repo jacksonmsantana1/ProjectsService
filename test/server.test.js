@@ -27,48 +27,12 @@ describe('User', () => {
     }, privateKey, options);
   };
 
-  let invalidTokenHeader = (userId, options) => {
-    options = options || {};
-
-    return 'Bearer ' + Jwt.sign({
-        anus: userId,
-      }, privateKey, options);
-  };
-
   let invalidTokenKey = (userId, options) => {
     options = options || {};
 
     return 'Bearer ' + Jwt.sign({
         id: userId,
       }, 'invalid private key', options);
-  };
-
-  let invalidTokenBearer = (userId, options) => {
-    options = options || {};
-
-    return Jwt.sign({
-      id: userId,
-    }, 'invalid private key', options);
-  };
-
-  let withoutTokenSignature = (userId, options) => {
-    options = options || {
-        algorithm: 'none',
-      };
-
-    return 'Bearer ' + Jwt.sign({
-        id: userId,
-      }, privateKey, options);
-  };
-
-  let expiredToken = (userId, options) => {
-    options = options || {
-        expiresIn: '1',
-      };
-
-    return 'Bearer ' + Jwt.sign({
-        id: userId,
-      }, privateKey, options);
   };
 
   let projectsDB;
@@ -192,6 +156,22 @@ describe('User', () => {
         expect(response.result[0].name).to.be.equal('Project2');
         expect(response.result[1].id).to.be.equal('1');
         expect(response.result[1].name).to.be.equal('Project1');
+        done();
+      });
+    });
+
+    it('Should return a response with a valid authorization header', (done) => {
+      let options = {
+        method: 'GET',
+        url: '/projects?quantity=2',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        console.log(response.headers.authorization);
+        expect(!!response.headers.authorization).to.be.equal(true);
         done();
       });
     });

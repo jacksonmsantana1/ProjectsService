@@ -12,7 +12,7 @@ const idRequired = Boom.unauthorized('Token ID required');
 const expired = Boom.unauthorized('Token Expired');
 
 /*eslint consistent-return:1*/
-const _authenticate = (request) => (new Promise((resolve, reject) => {
+const _authenticate = (request) => new Promise((resolve, reject) => {
   const req = request.raw.req;
   const authorization = req.headers.authorization;
   const token = authorization && authorization.split(' ')[1];
@@ -64,20 +64,18 @@ const _authenticate = (request) => (new Promise((resolve, reject) => {
       resolve(request);
     }
   });
-}));
+});
 
-const _response = (request, next) => {
+const _response = (request, response, projects) => {
   const options = {
     algorithm: 'HS256',
     expiresIn: 7200000,
   };
 
   if (!!request && !!request.auth && request.auth.isAuthenticated) {
-    request.response
+    response(projects)
       .header('authorization', 'Bearer ' + jwt.sign(request.auth.credentials, KEY, options));
   }
-
-  next(true);
 };
 
 module.exports = {
