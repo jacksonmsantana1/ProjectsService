@@ -52,7 +52,7 @@ describe('ProjectModel', () => {
 
     it('Should return an error if none attribute is given', (done) => {
      ProjectDB.getProjects(projectsDB, '').catch((err) => {
-       expect(err.data).to.be.equal('MongoDB ERROR => Invalid Attribute');
+       expect(err.message).to.be.equal('MongoDB ERROR => Invalid Attribute');
        done();
      });
     });
@@ -60,7 +60,7 @@ describe('ProjectModel', () => {
     it('Should return an error if none database is given', (done) => {
       ProjectDB.getProjects(null, 10)
         .catch((err) => {
-          expect(err.data).to.be.equal('MongoDB ERROR => Inexistent DB');
+          expect(err.message).to.be.equal('MongoDB ERROR => Inexistent DB');
           done();
         });
     });
@@ -75,8 +75,7 @@ describe('ProjectModel', () => {
     it('Should return only valid Projects', (done) => {
       ProjectDB.getProjects(invalidProjectsDB, 2)
         .catch((err) => {
-          expect(err.name).to.be.equal('ValidationError');
-          expect(err.details[0].message).to.be.equal('name is required');
+          expect(err.message).to.be.equal('MongoDB Error => Invalid Project');
           done();
         });
     });
@@ -84,7 +83,55 @@ describe('ProjectModel', () => {
     it('Should return an error if none projects is found', (done) => {
       ProjectDB.getProjects(emptyProjectsDB, 2)
         .catch((err) => {
-          expect(err.data).to.be.equal('MongoDB ERROR => No projects found');
+          expect(err.message).to.be.equal('MongoDB ERROR => No projects found');
+          done();
+        });
+    });
+  });
+
+  describe('getProjectById(id) ->', () => {
+    it('Should return an promise', (done) => {
+      const promise = ProjectDB.getProjectById(projectsDB, '1234');
+      expect(promise.constructor.name).to.be.equal('Promise');
+      done();
+    });
+
+    it('Should return an error if none attribute is given', (done) => {
+      ProjectDB.getProjectById(projectsDB, '').catch((err) => {
+        expect(err.message).to.be.equal('MongoDB ERROR => Invalid Attribute');
+        done();
+      });
+    });
+
+    it('Should return an error if none database is given', (done) => {
+      ProjectDB.getProjectById(null, '1234')
+        .catch((err) => {
+          expect(err.message).to.be.equal('MongoDB ERROR => Inexistent DB');
+          done();
+        });
+    });
+
+    it('Should return an error if the project doesnt exist', (done) => {
+      ProjectDB.getProjectById(projectsDB, '1234')
+        .catch((err) => {
+          expect(err.message).to.be.equal('MongoDB ERROR => Inexistent Project');
+          done();
+        });
+    });
+
+    it('Should return an error if the project returned isnt valid', (done) => {
+      ProjectDB.getProjectById(invalidProjectsDB, '1')
+        .catch((err) => {
+          expect(err.message).to.be.equal('MongoDB Error => Invalid Project');
+          done();
+        });
+    });
+
+    it('Should return an valid project', (done) => {
+      ProjectDB.getProjectById(projectsDB, '1')
+        .then((project) => {
+          expect(project.id).to.be.equal('1');
+          expect(project.name).to.be.equal('Project1');
           done();
         });
     });

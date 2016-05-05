@@ -15,7 +15,6 @@ const before = lab.before;
 const after = lab.after;
 
 const server = require('../server.js');
-const Boom = require('boom');
 const Project = require('../app/Project/');
 
 describe('User', () => {
@@ -161,6 +160,122 @@ describe('User', () => {
       let options = {
         method: 'GET',
         url: '/projects?quantity=2',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(!!response.headers.authorization).to.be.equal(true);
+        done();
+      });
+    });
+  });
+
+  describe('/projects/{id}', () => {
+    it('Should be listening to GET /projects/{id}', (done) => {
+      let options = {
+        method: 'GET',
+        url: '/projects/1234',
+      };
+
+      server.inject(options, (response) => {
+        let res = response.raw.req;
+
+        expect(res.method).to.be.equal('GET');
+        expect(res.url).to.be.equal('/projects/1234');
+        done();
+      });
+    });
+
+    it('Should be expecting a valid token for authentication', (done) => {
+      let options = {
+        method: 'GET',
+        url: '/projects/1234',
+        headers: {
+          authorization: invalidTokenKey('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        const result = response.result;
+        expect(result.statusCode).to.be.equal(401);
+        expect(result.error).to.be.equal('Unauthorized');
+        expect(result.message).to.be.equal('Invalid Token Signature');
+        done();
+      });
+    });
+
+    it('Should return an error if the projects doesnt exist', (done) => {
+      let options = {
+        method: 'GET',
+        url: '/projects/1234',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        const result = response.result;
+        expect(result.message).to.be.equal('MongoDB ERROR => Inexistent Project');
+        expect(result.statusCode).to.be.equal(400);
+        expect(result.error).to.be.equal('Bad Request');
+        done();
+      });
+    });
+
+    it('Should return an error if the user doesnt exists', (done) => {
+      let options = {
+        method: 'GET',
+        url: '/projects/1',
+        headers: {
+          authorization: tokenHeader('DontExist'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(401);
+        expect(response.result.message).to.be.equal('Invalid User');
+        expect(response.result.error).to.be.equal('Unauthorized');
+        done();
+      });
+    });
+
+    it('Should return an error if no params is given', (done) => {
+      let options = {
+        method: 'GET',
+        url: '/projects/',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(404);
+        done();
+      });
+    });
+
+    it('Should return the project if everything is alright', (done) => {
+      let options = {
+        method: 'GET',
+        url: '/projects/1',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.id).to.be.equal('1');
+        expect(response.result.name).to.be.equal('Project1');
+        done();
+      });
+    });
+
+    it('Should return a response with a valid authorization header', (done) => {
+      let options = {
+        method: 'GET',
+        url: '/projects/1',
         headers: {
           authorization: tokenHeader('1234567'),
         },
