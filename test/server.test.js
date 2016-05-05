@@ -73,8 +73,6 @@ describe('User', () => {
     });
 
     it('Should be expecting a valid token for authentication', (done) => {
-      const stub = sinon.stub(server.methods, 'authenticate')
-        .returns(Promise.reject(Boom.unauthorized('Invalid Token Signature')));
       let options = {
         method: 'GET',
         url: '/projects?quantity=2',
@@ -88,7 +86,6 @@ describe('User', () => {
         expect(result.statusCode).to.be.equal(401);
         expect(result.error).to.be.equal('Unauthorized');
         expect(result.message).to.be.equal('Invalid Token Signature');
-        stub.restore();
         done();
       });
     });
@@ -170,7 +167,6 @@ describe('User', () => {
       };
 
       server.inject(options, (response) => {
-        console.log(response.headers.authorization);
         expect(!!response.headers.authorization).to.be.equal(true);
         done();
       });

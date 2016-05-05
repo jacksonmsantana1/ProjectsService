@@ -12,7 +12,7 @@ const idRequired = Boom.unauthorized('Token ID required');
 const expired = Boom.unauthorized('Token Expired');
 
 /*eslint consistent-return:1*/
-const _authenticate = (request) => new Promise((resolve, reject) => {
+const _authenticate = (request, reply) => {
   const req = request.raw.req;
   const authorization = req.headers.authorization;
   const token = authorization && authorization.split(' ')[1];
@@ -21,64 +21,60 @@ const _authenticate = (request) => new Promise((resolve, reject) => {
   if (!authorization) {
     request.log('AUTH',
       logMessage(request.id, false, 'undefined', req.url, tokenRequired.message));
-    reject(tokenRequired);
+    return reply(tokenRequired, null);
   }
 
   if (bearer !== 'Bearer') {
     request.log('AUTH',
       logMessage(request.id, false, 'undefined', req.url, bearerRequired.message));
-    reject(bearerRequired);
+    return reply(bearerRequired, null);
   }
 
   jwt.verify(token, KEY, (err, decoded) => {
     if (err && err.message === 'invalid signature') {
       request.log('AUTH',
         logMessage(request.id, false, 'undefined', req.url, invalidSignature.message));
-      reject(invalidSignature);
+      return reply(invalidSignature, null);
     } else if (err && err.message === 'jwt signature is required') {
       request.log('AUTH',
         logMessage(request.id, false, 'undefined', req.url, signatureRequired.message));
-      reject(signatureRequired);
+      return reply(signatureRequired, null);
     } else if (err && err.message === 'jwt expired') {
       request.log('AUTH',
         logMessage(request.id, false, 'undefined', req.url, expired.message));
-      reject(expired);
+      return reply(expired, null);
     } else if (!!err && !decoded) {
       request.log('AUTH',
         logMessage(request.id, false, 'undefined', req.url, err.message));
-      reject(Boom.badRequest(err.message));
+      return reply(Boom.badRequest(err.message), null);
     } else if (!!decoded && !decoded.id) {
       request.log('AUTH',
         logMessage(request.id, false, 'undefined', req.url, idRequired));
-      reject(idRequired);
-    } else if (!!decoded) {
-      request.log('AUTH',
-        logMessage(request.id, true, decoded.id, req.url, 'Authentication Passed'));
-
-      //FIXME set the request auth object manually
-      /*eslint no-param-reassign:1*/
-      request.auth = {
-        credentials: decoded,
-        isAuthenticated: true,
-      };
-      resolve(request);
+      return reply(idRequired, null);
     }
-  });
-});
 
-const _response = (request, response, projects) => {
+    request.log('AUTH',
+      logMessage(request.id, true, decoded.id, req.url, 'Authentication Passed'));
+    return reply.continue({ credentials: decoded });
+  });
+};
+
+const _response = (request, reply) => {
   const options = {
     algorithm: 'HS256',
     expiresIn: 7200000,
   };
 
   if (!!request && !!request.auth && request.auth.isAuthenticated) {
-    response(projects)
+    request.response
       .header('authorization', 'Bearer ' + jwt.sign(request.auth.credentials, KEY, options));
   }
+
+  reply.continue();
 };
 
-module.exports = {
+/*eslint no-unused-vars:1*/
+module.exports = (server, options) => ({
   authenticate: _authenticate,
   response: _response,
-};
+});

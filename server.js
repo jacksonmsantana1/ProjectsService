@@ -8,8 +8,8 @@ server.connection({
   port: 8000,
 });
 
-//server.auth.scheme('token', require('./app/plugins/auth/auth'));
-//server.auth.strategy('default', 'token');
+server.auth.scheme('token', require('./app/plugins/auth/auth'));
+server.auth.strategy('default', 'token');
 
 const goodConfig = {
   reporters: [{
@@ -85,7 +85,7 @@ const routeStart = () => server.route([{
   method: 'GET',
   path: '/projects',
   config: {
-    //auth: 'default',
+    auth: 'default',
     description: 'Retrieve the patchworks projects',
     tags: ['projects', 'patchwork'],
     cors: {
@@ -102,14 +102,6 @@ const routeStart = () => server.route([{
 ]);
 
 /*******************************Methods***********************************/
-
-server.method({
-  name: 'authenticate',
-  method: require('./app/plugins/auth/auth').authenticate,
-  options: {
-    callback: false,
-  },
-});
 
 /**********************************Start***********************************/
 const start = () => {

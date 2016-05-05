@@ -1,3 +1,5 @@
+const server = require('../server');
+
 const Lab = require('lab');
 const lab = exports.lab = Lab.script();
 
@@ -7,21 +9,9 @@ const privateKey = require('../privateKey');
 const expect = require('chai').expect;
 const describe = lab.describe;
 const it = lab.it;
-const beforeEach = lab.beforeEach;
-const auth = require('../app/plugins/auth/auth').authenticate;
 
 describe('AUTH', () => {
   let error;
-  let requestMock;
-  let userId;
-
-  let tokenHeader = (userId, options) => {
-    options = options || {};
-
-    return 'Bearer ' + Jwt.sign({
-        id: userId,
-      }, privateKey, options);
-  };
 
   let invalidTokenHeader = (userId, options) => {
     options = options || {};
@@ -67,134 +57,131 @@ describe('AUTH', () => {
       }, privateKey, options);
   };
 
-  beforeEach((done) => {
-    userId = '1234567';
-    requestMock = {
-      id: '1234567890',
-      log: (auth, log) => {},
-      raw: {
-        req: {
-          headers: {},
-        },
-      },
-    };
-    done();
-  });
-
-  it('Should return an Promise', (done) => {
-    const res = auth(requestMock);
-
-    expect(res.constructor.name).to.be.equal('Promise');
-    done();
-  });
-
   it('Should return an error if the request header doenst contain a token', (done) => {
-    const tokenRequired = {
-      statusCode: 401,
-      error: 'Unauthorized',
-      message: 'Token Required',
+    let options = {
+      method: 'GET',
+      url: '/projects',
     };
+    let strError = 'Token Required';
 
-    auth(requestMock).catch((err) => {
-      expect(err.output.statusCode).to.be.equal(tokenRequired.statusCode);
-      expect(err.output.payload.message).to.be.equal('Token Required');
-      expect(err.output.payload.error).to.be.equal('Unauthorized');
+    server.inject(options, (response) => {
+      expect(response.statusCode).to.be.equal(401);
+      expect(response.result.message).to.be.equal(strError);
       done();
     });
   });
 
   it('Should return an error if the request header doenst contain an bearer token ', (done) => {
-      const tokenRequired = {
-        statusCode: 401,
-        error: 'Unauthorized',
-        message: 'Bearer Required',
-      };
-
-      requestMock.raw.req.headers.authorization = invalidTokenBearer(userId);
-
-      auth(requestMock).catch((err) => {
-        expect(err.output.statusCode).to.be.equal(tokenRequired.statusCode);
-        expect(err.output.payload.message).to.be.equal(tokenRequired.message);
-        expect(err.output.payload.error).to.be.equal(tokenRequired.error);
-        done();
-      });
-    });
-
-  it('Should return an error if the token has an invalid signature', (done) => {
-    const tokenRequired = {
+    const bearerRequired = {
       statusCode: 401,
       error: 'Unauthorized',
-      message: 'Token Signature is required',
+      message: 'Bearer Required',
     };
 
-    requestMock.raw.req.headers.authorization = withoutTokenSignature(userId);
+    let options = {
+      method: 'GET',
+      url: '/projects',
+      headers: {
+        authorization: invalidTokenBearer('1234567890'),
+      },
+    };
 
-    auth(requestMock).catch((err) => {
-      expect(err.output.statusCode).to.be.equal(tokenRequired.statusCode);
-      expect(err.output.payload.message).to.be.equal(tokenRequired.message);
-      expect(err.output.payload.error).to.be.equal(tokenRequired.error);
+    server.inject(options, (response) => {
+      expect(response.result.statusCode).to.be.equal(bearerRequired.statusCode);
+      expect(response.result.message).to.be.equal(bearerRequired.message);
+      expect(response.result.error).to.be.equal(bearerRequired.error);
       done();
     });
   });
 
-  it('Should return an error if the token is invalid', (done) => {
-    const tokenRequired = {
+  it('Should return an error if the token has an invalid signature', (done) => {
+    const invalidSignature = {
       statusCode: 401,
       error: 'Unauthorized',
       message: 'Invalid Token Signature',
     };
 
-    requestMock.raw.req.headers.authorization = invalidTokenKey(userId);
+    let options = {
+      method: 'GET',
+      url: '/projects',
+      headers: {
+        authorization: invalidTokenKey('1234567890'),
+      },
+    };
 
-    auth(requestMock).catch((err) => {
-      expect(err.output.statusCode).to.be.equal(tokenRequired.statusCode);
-      expect(err.output.payload.message).to.be.equal(tokenRequired.message);
-      expect(err.output.payload.error).to.be.equal(tokenRequired.error);
+    server.inject(options, (response) => {
+      expect(response.result.statusCode).to.be.equal(invalidSignature.statusCode);
+      expect(response.result.message).to.be.equal(invalidSignature.message);
+      expect(response.result.error).to.be.equal(invalidSignature.error);
+      done();
+    });
+  });
+
+  it('Should return an error if the token is invalid', (done) => {
+    const invalidSignature = {
+      statusCode: 401,
+      error: 'Unauthorized',
+      message: 'Token Signature is required',
+    };
+
+    let options = {
+      method: 'GET',
+      url: '/projects',
+      headers: {
+        authorization: withoutTokenSignature('1234567890'),
+      },
+    };
+
+    server.inject(options, (response) => {
+      expect(response.result.statusCode).to.be.equal(invalidSignature.statusCode);
+      expect(response.result.message).to.be.equal(invalidSignature.message);
+      expect(response.result.error).to.be.equal(invalidSignature.error);
       done();
     });
   });
 
   it('Should return an error if the token doesnt contain an id value', (done) => {
-    const tokenRequired = {
+    const invalidSignature = {
       statusCode: 401,
       error: 'Unauthorized',
       message: 'Token ID required',
     };
 
-    requestMock.raw.req.headers.authorization = invalidTokenHeader(userId);
+    let options = {
+      method: 'GET',
+      url: '/projects',
+      headers: {
+        authorization: invalidTokenHeader('1234567890'),
+      },
+    };
 
-    auth(requestMock).catch((err) => {
-      expect(err.output.statusCode).to.be.equal(tokenRequired.statusCode);
-      expect(err.output.payload.message).to.be.equal(tokenRequired.message);
-      expect(err.output.payload.error).to.be.equal(tokenRequired.error);
+    server.inject(options, (response) => {
+      expect(response.result.statusCode).to.be.equal(invalidSignature.statusCode);
+      expect(response.result.message).to.be.equal(invalidSignature.message);
+      expect(response.result.error).to.be.equal(invalidSignature.error);
       done();
     });
   });
 
   it('Should return an error if the token is expired', (done) => {
-    const tokenRequired = {
+    const _expiredToken = {
       statusCode: 401,
       error: 'Unauthorized',
       message: 'Token Expired',
     };
 
-    requestMock.raw.req.headers.authorization = expiredToken(userId);
+    let options = {
+      method: 'GET',
+      url: '/projects',
+      headers: {
+        authorization: expiredToken('1234567890'),
+      },
+    };
 
-    auth(requestMock).catch((err) => {
-      expect(err.output.statusCode).to.be.equal(tokenRequired.statusCode);
-      expect(err.output.payload.message).to.be.equal(tokenRequired.message);
-      expect(err.output.payload.error).to.be.equal(tokenRequired.error);
-      done();
-    });
-  });
-
-  it('Should return the user id if it s a valid token', (done) => {
-    requestMock.raw.req.headers.authorization = tokenHeader(userId);
-
-    auth(requestMock).then((res) => {
-      expect(res.auth.isAuthenticated).to.be.equal(true);
-      expect(res.auth.credentials.id).to.be.equal(userId);
-      expect(res.id).to.be.equal(requestMock.id);
+    server.inject(options, (response) => {
+      expect(response.result.statusCode).to.be.equal(_expiredToken.statusCode);
+      expect(response.result.message).to.be.equal(_expiredToken.message);
+      expect(response.result.error).to.be.equal(_expiredToken.error);
       done();
     });
   });
