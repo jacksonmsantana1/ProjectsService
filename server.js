@@ -115,6 +115,23 @@ const routeStart = () => server.route([{
     },
   },
   handler: require('./app/handlers/GET/projects/id/'),
+}, {
+  method: 'GET',
+  path: '/projects/isValid/{id}',
+  config: {
+    auth: 'default',
+    description: 'Retrieve one Patchwork Project by its ID',
+    tags: ['projects', 'patchwork'],
+    cors: {
+      origin: ['http://localhost:8080'], //FIXME Remove in production
+    },
+    validate: {
+      params: {
+        id: Joi.string().required(),
+      },
+    },
+  },
+  handler: require('./app/handlers/GET/projects/isValid/id/'),
 },
 ]);
 

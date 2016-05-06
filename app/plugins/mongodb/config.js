@@ -8,7 +8,7 @@ module.exports = {
     },
   },
   postman: {
-    url: 'mongodb://postman:postman@ds011429.mlab.com:11429/projects',
+    url: 'mongodb://postman:postman@ds011429.mlab.com:11429/user',
     settings: {
       db: {
         nativeParser: false,
