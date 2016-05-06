@@ -120,7 +120,7 @@ const routeStart = () => server.route([{
   path: '/projects/isValid/{id}',
   config: {
     auth: 'default',
-    description: 'Retrieve one Patchwork Project by its ID',
+    description: 'Checks if the project exists',
     tags: ['projects', 'patchwork'],
     cors: {
       origin: ['http://localhost:8080'], //FIXME Remove in production
@@ -132,6 +132,23 @@ const routeStart = () => server.route([{
     },
   },
   handler: require('./app/handlers/GET/projects/isValid/id/'),
+}, {
+  method: 'PUT',
+  path: '/projects/{id}/liked',
+  config: {
+    auth: 'default',
+    description: 'Anotate the user who liked the project',
+    tags: ['projects', 'patchwork'],
+    cors: {
+      origin: ['http://localhost:8080'], //FIXME Remove in production
+    },
+    validate: {
+      params: {
+        id: Joi.string().required(),
+      },
+    },
+  },
+  handler: require('./app/handlers/PUT/projects/id/liked/'),
 },
 ]);
 

@@ -2,7 +2,9 @@
 const _isValid = (id) =>
   new Promise((resolve, reject) => {
     if (id === 'DontExist') {
-      reject(false);
+      resolve(false);
+    } else if (id === 'Server Communication Error') {
+      reject('Server Communication Error');
     }
 
     resolve(true);

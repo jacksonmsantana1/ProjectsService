@@ -46,16 +46,29 @@ describe('User', () => {
       console.log('Connected...');
       database = db;
       projectsDB = database.collection('projects');
-      done();
+      projectsDB.insert(require('./mock'), (err) => {
+        if (err) {
+          throw err;
+        }
+
+        done();
+        console.log('Added projects');
+      });
     });
   });
 
   after((done) => {
-    sinon.restore();
-    done();
+    projectsDB.remove({}, (err) => {
+      if (err) {
+        throw err
+      }
+
+      sinon.restore();
+      done();
+    });
   });
 
-  describe('/projects', () => {
+  describe('GET /projects', () => {
     it('Should be listening to GET /projects', (done) => {
       let options = {
         method: 'GET',
@@ -172,7 +185,7 @@ describe('User', () => {
     });
   });
 
-  describe('/projects/{id}', () => {
+  describe('GET /projects/{id}', () => {
     it('Should be listening to GET /projects/{id}', (done) => {
       let options = {
         method: 'GET',
@@ -288,7 +301,7 @@ describe('User', () => {
     });
   });
 
-  describe('/projects/isValid/{id}', () => {
+  describe('GET /projects/isValid/{id}', () => {
     it('Should be listening to GET /projects/{id}', (done) => {
       let options = {
         method: 'GET',
@@ -397,6 +410,93 @@ describe('User', () => {
 
       server.inject(options, (response) => {
         expect(!!response.headers.authorization).to.be.equal(true);
+        done();
+      });
+    });
+  });
+
+  describe('PUT /projects/{id}/liked', () => {
+    it('Should be listening to PUT /projects/{id}/liked', (done) => {
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/liked',
+      };
+
+      server.inject(options, (response) => {
+        let res = response.raw.req;
+
+        expect(res.method).to.be.equal('PUT');
+        expect(res.url).to.be.equal('/projects/1/liked');
+        done();
+      });
+    });
+
+    it('Should be expecting a valid token for authentication', (done) => {
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/liked',
+        headers: {
+          authorization: invalidTokenKey('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        const result = response.result;
+        expect(result.statusCode).to.be.equal(401);
+        expect(result.error).to.be.equal('Unauthorized');
+        expect(result.message).to.be.equal('Invalid Token Signature');
+        done();
+      });
+    });
+
+    it('Should return an error if the user doesnt exists', (done) => {
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/liked',
+        headers: {
+          authorization: tokenHeader('DontExist'),
+        },
+      };
+
+      require('fs').writeFile('info.log', tokenHeader('DontExist'), () => {
+        server.inject(options, (response) => {
+          expect(response.result.statusCode).to.be.equal(401);
+          expect(response.result.message).to.be.equal('Invalid User');
+          expect(response.result.error).to.be.equal('Unauthorized');
+          done();
+        });
+      });
+    });
+
+    it('Should return an error if the project doesnt exist', (done) => {
+      let options = {
+        method: 'PUT',
+        url: '/projects/214341234/liked',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(400);
+        expect(response.result.message).to.be.equal('MongoDB ERROR => Inexistent Project');
+        expect(response.result.error).to.be.equal('Bad Request');
+        done();
+      });
+    });
+
+    it('Should return true if everything went OK', (done) => {
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/liked',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.statusCode).to.be.equal(200);
+        expect(response.result).to.be.equal(true);
         done();
       });
     });

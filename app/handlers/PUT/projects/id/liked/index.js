@@ -1,5 +1,5 @@
 const Boom = require('boom');
-const logMessage = require('../../../../plugins/logger/');
+const logMessage = require('../../../../../plugins/logger/');
 
 const curry = require('ramda').curry;
 const compose = require('ramda').compose;
@@ -22,8 +22,11 @@ const isAuthenticated = (request) => {
 // getCredential :: Request -> String:id
 const getCredential = compose(get('id'), get('credentials'), get('auth'));
 
+// getParamsId :: Request -> String:projectId
+const getParamsId = compose(get('id'), get('params'));
+
 // isValid :: String:id -> Promise(Error, Boolean)
-const isValid = require('../../../../plugins/User/').isValid;
+const isValid = require('../../../../../plugins/User/').isValid;
 
 // isUserValid :: Request -> Promise(Error, Boolean)
 const isUserValid = compose(isValid, getCredential);
@@ -41,25 +44,34 @@ const userNotOk = (err) =>
 // validateUser :: Request -> Promise(Error, Request)
 const validateUser = (request) => isUserValid(request).then(userOK(request)).catch(userNotOk);
 
-// getProjectId :: Request -> String:id
-const getProjectId = compose(get('id'), get('params'));
+// createLike :: Request -> Object:like
+const createLike = (request) => ({
+  user: getCredential(request),
+  date: new Date(),
+});
 
-// getProject :: Database -> String:id -> Promise(Error, Project)
-const getProject = require('../../../../Project/index').getProjectById;
+// addLikes :: Database:db -> String:projectId -> Object:like -> Promise(Error, Boolean:liked)
+const addLikes = require('../../../../../Project/index').addLikes;
 
-// sendResponse :: Request -> Response -> Project -> Response(Project)
-const sendResponse = curry((request, reply, project) => {
-  request.log('/projects/{id}',
+// addLikesToProject :: Request -> Promise(Error, Boolean:liked)
+const addLikesToProject = curry((db, request) => {
+  const projectId = getParamsId(request);
+  const like = createLike(request);
+
+  return addLikes(db, projectId, like)
+    .then((ok) => Promise.resolve(ok))
+    .catch((err) => Promise.reject(Boom.badRequest(err.message)));
+});
+
+// sendResponse :: Request -> Response -> Boolean:liked -> Response(Boolean)
+const sendResponse = curry((request, reply, liked) => {
+  request.log('/projects/{id}/liked',
     logMessage(request.id, true, request.auth.credentials.id, request.path, 'OK 200'));
-  reply(project);
+  reply(liked);
 });
 
 // sendError :: Request -> Response -> Error -> Response(Error)
 const sendError = curry((request, reply, err) => {
-  if (err.message === 'MongoDB ERROR => Inexistent Project') {
-    reply(Boom.badRequest(err.message));
-  }
-
   request.log('ERROR',
     logMessage(request.id, false, request.auth.credentials.id, request.path, err.message));
   reply(err);
@@ -69,12 +81,11 @@ module.exports = (request, reply) => {
   const db = request.server.plugins['hapi-mongodb'].db;
   const collection = db.collection('projects');
 
-  request.log('/projects/{id}',
+  request.log('/projects/{id}/liked',
     logMessage(request.id, true, request.auth.credentials.id, request.path, 'Endpoint reached'));
   isAuthenticated(request)
     .then(validateUser)
-    .then(getProjectId)
-    .then(getProject(collection))
+    .then(addLikesToProject(collection))
     .then(sendResponse(request, reply))
     .catch(sendError(request, reply));
 };

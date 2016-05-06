@@ -19,19 +19,27 @@ const isAuthenticated = (request) => {
   return Promise.error(Boom.badRequest('Invalid Request Object'));
 };
 
-// getCredential :: Request -> String:credential
+// getCredential :: Request -> String:id
 const getCredential = compose(get('id'), get('credentials'), get('auth'));
 
 // isValid :: String:id -> Promise(Error, Boolean)
 const isValid = require('../../../../../plugins/User/').isValid;
 
-// isUserValid :: Request -> Promise(Error, Request)
-const isUserValid = (req) =>
+// isUserValid :: Request -> Promise(Error, Boolean)
+const isUserValid = compose(isValid, getCredential);
+
+// userOK :: Boolean<true> -> Promise(Error, Request)
+const userOK = curry((request, ok) =>
   new Promise((resolve, reject) => {
-    isValid(getCredential(req))
-      .then((ok) => resolve(req)) /*eslint no-unused-vars:1*/
-      .catch((notOk) => reject(Boom.unauthorized('Invalid User')));
-  });
+    ok ? resolve(request) : reject(Boom.unauthorized('Invalid User'));
+  }));
+
+//userNotOk :: Error -> Promise(Error)
+const userNotOk = (err) =>
+  Promise.reject(Boom.badImplementation('Server Communication failed', err));
+
+// validateUser :: Request -> Promise(Error, Request)
+const validateUser = (request) => isUserValid(request).then(userOK(request)).catch(userNotOk);
 
 // getProjectId :: Request -> String:id
 const getProjectId = compose(get('id'), get('params'));
@@ -64,7 +72,7 @@ module.exports = (request, reply) => {
   request.log('/projects/isValid/{id}',
     logMessage(request.id, true, request.auth.credentials.id, request.path, 'Endpoint reached'));
   isAuthenticated(request)
-    .then(isUserValid)
+    .then(validateUser)
     .then(getProjectId)
     .then(getProject(collection))
     .then(sendResponse(request, reply))

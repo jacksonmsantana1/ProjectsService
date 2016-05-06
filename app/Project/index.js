@@ -81,7 +81,31 @@ const _getProjectById = curry((db, id) =>
       .catch(reject);
   }));
 
+// _addLikes :: Database:db -> Object:like -> Promise(Error, Project)
+const _addLikes = curry((db, projectId, like) =>
+  new Promise((resolve, reject) => {
+    if (isEmpty(like) || isNil(like)) {
+      reject(new Error('MongoDB ERROR => Invalid Attribute:like'));
+    } else if (isNil(db) || isEmpty(db)) {
+      reject(new Error('MongoDB ERROR => Inexistent DB'));
+    } else if (isNil(projectId) || isEmpty(projectId)) {
+      reject(new Error('MongoDB ERROR => Invalid Attribute:projectId'));
+    }
+
+    db.findOneAndUpdate({ id: projectId }, { $push: { liked: like } })
+      .then((doc) => {
+        if (!doc.value) {
+          reject(new Error('MongoDB ERROR => Inexistent Project'));
+        } else if (!!doc.value) {
+          resolve(true);
+        }
+
+        reject(new Error('MongoDB ERROR => Something Occured'));
+      });
+  }));
+
 module.exports = {
   getProjects: _getProjects,
   getProjectById: _getProjectById,
+  addLikes: _addLikes,
 };

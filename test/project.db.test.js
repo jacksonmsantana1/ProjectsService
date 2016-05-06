@@ -34,13 +34,27 @@ describe('ProjectModel', () => {
       emptyProjectsDB = database.collection('empty');
       usersDB = database.collection('users');
 
-      done();
+      projectsDB.insert(require('./mock'), (err) => {
+        "use strict";
+        if (err) {
+          throw err;
+        }
+
+        console.log('Projects added');
+        done();
+      });
     });
   });
 
   after((done) => {
-    sinon.restore();
-    done();
+    projectsDB.remove({}, (err) => {
+      if (err) {
+        throw err;
+      }
+
+      sinon.restore();
+      done();
+    });
   });
 
   describe('getProjects(number) -> ', () => {
@@ -132,6 +146,52 @@ describe('ProjectModel', () => {
         .then((project) => {
           expect(project.id).to.be.equal('1');
           expect(project.name).to.be.equal('Project1');
+          done();
+        });
+    });
+  });
+
+  describe('addLikes(projectId, like)', () => {
+    it('Should return an promise', (done) => {
+      const promise = ProjectDB.addLikes(projectsDB, '1234', {});
+      expect(promise.constructor.name).to.be.equal('Promise');
+      done();
+    });
+
+    it('Should return an error if none like object is given', (done) => {
+      ProjectDB.addLikes(projectsDB, '1', null).catch((err) => {
+        expect(err.message).to.be.equal('MongoDB ERROR => Invalid Attribute:like');
+        done();
+      });
+    });
+
+    it('Should return an error if none project id is given', (done) => {
+      ProjectDB.addLikes(projectsDB, '', { like: 'ANUS'}).catch((err) => {
+        expect(err.message).to.be.equal('MongoDB ERROR => Invalid Attribute:projectId');
+        done();
+      });
+    });
+
+    it('Should return an error if none database is given', (done) => {
+      ProjectDB.addLikes(null, '1234', { like: 'ANUS' })
+        .catch((err) => {
+          expect(err.message).to.be.equal('MongoDB ERROR => Inexistent DB');
+          done();
+        });
+    });
+
+    it('Should return an error if the project doesnt exist', (done) => {
+      ProjectDB.addLikes(projectsDB, '1234', { like: 'ANUS' })
+        .catch((err) => {
+          expect(err.message).to.be.equal('MongoDB ERROR => Inexistent Project');
+          done();
+        });
+    });
+
+    it('Should return true if everything runs OK', (done) => {
+      ProjectDB.addLikes(invalidProjectsDB, '1', { like: 'ANUS'})
+        .then((ok) => {
+          expect(ok).to.be.equal(true);
           done();
         });
     });
