@@ -151,7 +151,7 @@ describe('ProjectModel', () => {
     });
   });
 
-  describe('addLikes(projectId, like)', () => {
+  describe('addLikes(projectId, like) ->', () => {
     it('Should return an promise', (done) => {
       const promise = ProjectDB.addLikes(projectsDB, '1234', {});
       expect(promise.constructor.name).to.be.equal('Promise');
@@ -189,9 +189,67 @@ describe('ProjectModel', () => {
     });
 
     it('Should return true if everything runs OK', (done) => {
-      ProjectDB.addLikes(invalidProjectsDB, '1', { like: 'ANUS'})
+      ProjectDB.addLikes(projectsDB, '1', { user: '1234567', creationDate: new Date() })
+        .then((ok) => {
+          console.log(ok);
+          expect(ok).to.be.equal(true);
+          return ProjectDB.getProjectById(projectsDB, '1')
+        })
+        .then((doc) => {
+          console.log(doc);
+          expect(doc.id).to.be.equal('1');
+          expect(doc.liked[2].user).to.be.equal('1234567');
+          done();
+        });
+    });
+  });
+
+  describe('removeLikes(projectId, userId) ->', () => {
+    it('Should return an promise', (done) => {
+      const promise = ProjectDB.removeLikes(projectsDB, '1234', {});
+      expect(promise.constructor.name).to.be.equal('Promise');
+      done();
+    });
+
+    it('Should return an error if none user id is given', (done) => {
+      ProjectDB.removeLikes(projectsDB, '1', null).catch((err) => {
+        expect(err.message).to.be.equal('MongoDB ERROR => Invalid Attribute:userId');
+        done();
+      });
+    });
+
+    it('Should return an error if none project id is given', (done) => {
+      ProjectDB.removeLikes(projectsDB, '', '1234567').catch((err) => {
+        expect(err.message).to.be.equal('MongoDB ERROR => Invalid Attribute:projectId');
+        done();
+      });
+    });
+
+    it('Should return an error if none database is given', (done) => {
+      ProjectDB.removeLikes(null, '1234', '1234567')
+        .catch((err) => {
+          expect(err.message).to.be.equal('MongoDB ERROR => Inexistent DB');
+          done();
+        });
+    });
+
+    it('Should return an error if the project doesnt exist', (done) => {
+      ProjectDB.removeLikes(projectsDB, '1234', '1234567')
+        .catch((err) => {
+          expect(err.message).to.be.equal('MongoDB ERROR => Inexistent Project');
+          done();
+        });
+    });
+
+    it('Should return true if everything runs OK', (done) => {
+      ProjectDB.removeLikes(projectsDB, '1', '1234567')
         .then((ok) => {
           expect(ok).to.be.equal(true);
+          return ProjectDB.getProjectById(projectsDB, '1');
+        })
+        .then((doc) => {
+          console.log(doc);
+          expect(doc.liked.length).to.be.equal(1);
           done();
         });
     });

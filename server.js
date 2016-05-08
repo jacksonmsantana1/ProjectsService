@@ -138,7 +138,7 @@ const routeStart = () => server.route([{
   config: {
     auth: 'default',
     description: 'Anotate the user who liked the project',
-    tags: ['projects', 'patchwork'],
+    tags: ['projects', 'patchwork', 'likes'],
     cors: {
       origin: ['http://localhost:8080'], //FIXME Remove in production
     },
@@ -149,6 +149,23 @@ const routeStart = () => server.route([{
     },
   },
   handler: require('./app/handlers/PUT/projects/id/liked/'),
+}, {
+  method: 'PUT',
+  path: '/projects/{id}/disliked',
+  config: {
+    auth: 'default',
+    description: 'Disliked the project by the user',
+    tags: ['projects', 'patchwork', 'likes'],
+    cors: {
+      origin: ['http://localhost:8080'], //FIXME Remove in production
+    },
+    validate: {
+      params: {
+        id: Joi.string().required(),
+      },
+    },
+  },
+  handler: require('./app/handlers/PUT/projects/id/disliked/'),
 },
 ]);
 
