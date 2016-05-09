@@ -581,5 +581,22 @@ describe('User', () => {
         done();
       });
     });
+
+    it('Should return an error if the project was already disliked by the user', (done) => {
+      let options = {
+        method: 'PUT',
+        url: '/projects/2/disliked',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(400);
+        expect(response.result.message).to.be.equal('ALready removed the like');
+        expect(response.result.error).to.be.equal('Bad Request');
+        done();
+      });
+    });
   });
 });
