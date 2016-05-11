@@ -20,11 +20,33 @@ const isAuthenticated = (request) => {
   return Promise.error(Boom.badRequest('Invalid Request Object'));
 };
 
-// getUserId :: Request -> String:userId
-const getUserId = compose(get('id'), get('credentials'), get('auth'));
+// getCredential :: Request -> String:id
+const getCredential = compose(get('id'), get('credentials'), get('auth'));
 
 // getParamsId :: Request -> String:projectId
 const getParamsId = compose(get('id'), get('params'));
+
+// isValid :: String:id -> Promise(Error, Boolean)
+const isValid = require('../../../../../plugins/User/').isValid;
+
+// isUserValid :: Request -> Promise(Error, Boolean)
+const isUserValid = compose(isValid, getCredential);
+
+// userOK :: Boolean<true> -> Promise(Error, Request)
+const userOK = curry((request, ok) =>
+  new Promise((resolve, reject) => {
+    ok ? resolve(request) : reject(Boom.unauthorized('Invalid User'));
+  }));
+
+//userNotOk :: Error -> Promise(Error)
+const userNotOk = (err) =>
+  Promise.reject(Boom.badImplementation('Server Communication failed', err));
+
+// validateUser :: Request -> Promise(Error, Request)
+const validateUser = (request) => isUserValid(request).then(userOK(request)).catch(userNotOk);
+
+// getUserId :: Request -> String:userId
+const getUserId = compose(get('id'), get('credentials'), get('auth'));
 
 // validateParams :: String:projectId -> Boolean
 const isValidParams = compose(isEmpty, getParamsId);
@@ -72,6 +94,7 @@ module.exports = (request, reply) => {
   request.log('/projects/{id}/disliked',
     logMessage(request.id, true, request.auth.credentials.id, request.path, 'Endpoint reached'));
   isAuthenticated(request)
+    .then(validateUser)
     .then(validateParams)
     .then(removeLikesToProject(collection))
     .then(sendResponse(request, reply))

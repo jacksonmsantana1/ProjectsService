@@ -66,5 +66,13 @@ module.exports = [{
       date: '06-05-2016',
     },
   ],
+}, /*Invlaid Projects*/ {
+  _id: ObjectId(),
+  id: '1',
+  like: [],
+}, {
+  _id: ObjectId(),
+  id: '2',
+  like: [],
 },
 ];

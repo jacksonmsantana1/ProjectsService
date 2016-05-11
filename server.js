@@ -11,6 +11,9 @@ server.connection({
 server.auth.scheme('token', require('./app/plugins/auth/auth'));
 server.auth.strategy('default', 'token');
 
+server.auth.scheme('admin', require('./app/plugins/auth/authAdmin'));
+server.auth.strategy('admin', 'admin');
+
 const goodConfig = {
   reporters: [{
     reporter: require('good-console'),
@@ -119,11 +122,11 @@ const routeStart = () => server.route([{
   method: 'GET',
   path: '/projects/isValid/{id}',
   config: {
-    auth: 'default',
+    auth: 'admin',
     description: 'Checks if the project exists',
     tags: ['projects', 'patchwork'],
     cors: {
-      origin: ['http://localhost:8080'], //FIXME Remove in production
+      origin: ['http://localhost:8080', 'http:localhost:3000'], //FIXME Remove in production
     },
     validate: {
       params: {

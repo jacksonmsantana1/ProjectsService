@@ -17,7 +17,6 @@ const _findById = curry((db, _id) => Promise.resolve(db.find({ id: _id }).toArra
 const validateCallback = (err, project) =>
   new Promise((resolve, reject) => {
     if (!!err) {
-      console.log(err);
       reject(new Error('MongoDB Error => Invalid Project'));
     }
 

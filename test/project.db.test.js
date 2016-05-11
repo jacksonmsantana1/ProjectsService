@@ -14,6 +14,8 @@ const it = lab.it;
 const before = lab.before;
 const after = lab.after;
 
+const projects = require('./mock');
+
 describe('ProjectModel', () => {
   let database;
   let projectsDB;
@@ -34,14 +36,20 @@ describe('ProjectModel', () => {
       emptyProjectsDB = database.collection('empty');
       usersDB = database.collection('users');
 
-      projectsDB.insert(require('./mock'), (err) => {
-        "use strict";
+      projectsDB.insert(projects, (err) => {
         if (err) {
           throw err;
         }
 
         console.log('Projects added');
-        done();
+        invalidProjectsDB.insert([projects[3], projects[4]], (err) => {
+          if (err) {
+            throw err;
+          }
+
+          console.log('Invalid Projects added');
+          done();
+        });
       });
     });
   });
@@ -52,8 +60,15 @@ describe('ProjectModel', () => {
         throw err;
       }
 
-      sinon.restore();
-      done();
+      console.log('Projects removed')
+      invalidProjectsDB.remove({}, (err) => {
+        if (err) {
+          throw err;
+        }
+
+        console.log('Invalid Projects removed');
+        done();
+      });
     });
   });
 
@@ -191,12 +206,10 @@ describe('ProjectModel', () => {
     it('Should return true if everything runs OK', (done) => {
       ProjectDB.addLikes(projectsDB, '1', { user: '1234567', creationDate: new Date() })
         .then((ok) => {
-          console.log(ok);
           expect(ok).to.be.equal(true);
           return ProjectDB.getProjectById(projectsDB, '1')
         })
         .then((doc) => {
-          console.log(doc);
           expect(doc.id).to.be.equal('1');
           expect(doc.liked[2].user).to.be.equal('1234567');
           done();
@@ -248,7 +261,6 @@ describe('ProjectModel', () => {
           return ProjectDB.getProjectById(projectsDB, '1');
         })
         .then((doc) => {
-          console.log(doc);
           expect(doc.liked.length).to.be.equal(1);
           done();
         });

@@ -1,5 +1,6 @@
 const Lab = require('lab');
 const lab = exports.lab = Lab.script();
+
 const sinon = require('sinon');
 const expect = require('chai').expect;
 
@@ -16,6 +17,8 @@ const after = lab.after;
 
 const server = require('../server.js');
 const Project = require('../app/Project/');
+const Wreck = require('wreck');
+const Boom = require('boom');
 
 describe('User', () => {
   let tokenHeader = (userId, options) => {
@@ -46,6 +49,7 @@ describe('User', () => {
       console.log('Connected...');
       database = db;
       projectsDB = database.collection('projects');
+
       projectsDB.insert(require('./mock'), (err) => {
         if (err) {
           throw err;
@@ -103,6 +107,10 @@ describe('User', () => {
     });
 
     it('Should return an error if the user doesnt exists', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, false);
+      });
+
       let options = {
         method: 'GET',
         url: '/projects?quantity=2',
@@ -115,11 +123,16 @@ describe('User', () => {
         expect(response.result.statusCode).to.be.equal(401);
         expect(response.result.message).to.be.equal('Invalid User');
         expect(response.result.error).to.be.equal('Unauthorized');
+        stub.restore();
         done();
       });
     });
 
     it('Should contain a param called quantity, which tells how many projects to return', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'GET',
         url: '/projects?quantity=2',
@@ -130,6 +143,7 @@ describe('User', () => {
 
       server.inject(options, (response) => {
         expect(response.result.length).to.be.equal(2);
+        stub.restore();
         done();
       });
     });
@@ -152,6 +166,10 @@ describe('User', () => {
     });
 
     it('Should return an array of projects if everything is alright', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'GET',
         url: '/projects?quantity=2',
@@ -165,11 +183,16 @@ describe('User', () => {
         expect(response.result[0].name).to.be.equal('Project1');
         expect(response.result[1].id).to.be.equal('2');
         expect(response.result[1].name).to.be.equal('Project2');
+        stub.restore();
         done();
       });
     });
 
     it('Should return a response with a valid authorization header', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'GET',
         url: '/projects?quantity=2',
@@ -180,6 +203,7 @@ describe('User', () => {
 
       server.inject(options, (response) => {
         expect(!!response.headers.authorization).to.be.equal(true);
+        stub.restore();
         done();
       });
     });
@@ -187,6 +211,10 @@ describe('User', () => {
 
   describe('GET /projects/{id}', () => {
     it('Should be listening to GET /projects/{id}', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'GET',
         url: '/projects/1234',
@@ -197,6 +225,7 @@ describe('User', () => {
 
         expect(res.method).to.be.equal('GET');
         expect(res.url).to.be.equal('/projects/1234');
+        stub.restore();
         done();
       });
     });
@@ -220,6 +249,10 @@ describe('User', () => {
     });
 
     it('Should return an error if the projects doesnt exist', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'GET',
         url: '/projects/1234',
@@ -233,11 +266,15 @@ describe('User', () => {
         expect(result.message).to.be.equal('MongoDB ERROR => Inexistent Project');
         expect(result.statusCode).to.be.equal(400);
         expect(result.error).to.be.equal('Bad Request');
+        stub.restore();
         done();
       });
     });
 
     it('Should return an error if the user doesnt exists', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, false);
+      });
       let options = {
         method: 'GET',
         url: '/projects/1',
@@ -250,6 +287,7 @@ describe('User', () => {
         expect(response.result.statusCode).to.be.equal(401);
         expect(response.result.message).to.be.equal('Invalid User');
         expect(response.result.error).to.be.equal('Unauthorized');
+        stub.restore();
         done();
       });
     });
@@ -270,6 +308,10 @@ describe('User', () => {
     });
 
     it('Should return the project if everything is alright', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'GET',
         url: '/projects/1',
@@ -281,11 +323,16 @@ describe('User', () => {
       server.inject(options, (response) => {
         expect(response.result.id).to.be.equal('1');
         expect(response.result.name).to.be.equal('Project1');
+        stub.restore();
         done();
       });
     });
 
     it('Should return a response with a valid authorization header', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'GET',
         url: '/projects/1',
@@ -296,13 +343,18 @@ describe('User', () => {
 
       server.inject(options, (response) => {
         expect(!!response.headers.authorization).to.be.equal(true);
+        stub.restore();
         done();
       });
     });
   });
 
-  describe('GET /projects/isValid/{id}', () => {
+  describe('GET /projects/isValid/{id}  ADMIN', () => {
     it('Should be listening to GET /projects/{id}', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'GET',
         url: '/projects/isValid/1',
@@ -313,6 +365,7 @@ describe('User', () => {
 
         expect(res.method).to.be.equal('GET');
         expect(res.url).to.be.equal('/projects/isValid/1');
+        stub.restore();
         done();
       });
     });
@@ -335,12 +388,56 @@ describe('User', () => {
       });
     });
 
+    it('Should return an error if the request is made by a not admin user', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, false);
+      });
+
+      let options = {
+        method: 'GET',
+        url: '/projects/isValid/1',
+        headers: {
+          authorization: tokenHeader('notAdmin'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.statusCode).to.be.equal(403);
+        expect(JSON.parse(response.payload).message)
+          .to.be.equal('Normal User not allowed');
+        stub.restore();
+        done();
+      });
+    });
+
+    it('Should return an error if the user doesnt exist', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 401 }, Boom.unauthorized('Inexistent User'));
+      });
+
+      let options = {
+        method: 'GET',
+        url: '/projects/isValid/1',
+        headers: {
+          authorization: tokenHeader('inexistentUser'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.statusCode).to.be.equal(401);
+        expect(JSON.parse(response.payload).message)
+          .to.be.equal('Inexistent User');
+        stub.restore();
+        done();
+      });
+    });
+
     it('Should return an error if no params is given', (done) => {
       let options = {
         method: 'GET',
         url: '/projects/isValid/',
         headers: {
-          authorization: tokenHeader('1234567'),
+          authorization: require('../admin'),
         },
       };
 
@@ -350,66 +447,46 @@ describe('User', () => {
       });
     });
 
-    it('Should return an error if the user doesnt exists', (done) => {
-      let options = {
-        method: 'GET',
-        url: '/projects/isValid/1',
-        headers: {
-          authorization: tokenHeader('DontExist'),
-        },
-      };
-
-      server.inject(options, (response) => {
-        expect(response.result.statusCode).to.be.equal(401);
-        expect(response.result.message).to.be.equal('Invalid User');
-        expect(response.result.error).to.be.equal('Unauthorized');
-        done();
-      });
-    });
-
     it('Should return true if the project exists', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'GET',
         url: '/projects/isValid/1',
         headers: {
-          authorization: tokenHeader('1234567'),
+          authorization: tokenHeader('postmanAdmin'),
         },
       };
 
-      server.inject(options, (response) => {
-        const result = response.result;
-        expect(result).to.be.equal(true);
-        done();
+      require('fs').writeFile('info.log', require('../admin'), () => {
+        server.inject(options, (response) => {
+          const result = response.result;
+          expect(result).to.be.equal(true);
+          stub.restore();
+          done();
+        });
       });
     });
 
     it('Should return false if the projects doesnt exist', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'GET',
         url: '/projects/isValid/1234',
         headers: {
-          authorization: tokenHeader('1234567'),
+          authorization: tokenHeader('postmanAdmin'),
         },
       };
 
       server.inject(options, (response) => {
         const result = response.result;
         expect(result).to.be.equal(false);
-        done();
-      });
-    });
-
-    it('Should return a response with a valid authorization header', (done) => {
-      let options = {
-        method: 'GET',
-        url: '/projects/isValid/1',
-        headers: {
-          authorization: tokenHeader('1234567'),
-        },
-      };
-
-      server.inject(options, (response) => {
-        expect(!!response.headers.authorization).to.be.equal(true);
+        stub.restore();
         done();
       });
     });
@@ -450,6 +527,10 @@ describe('User', () => {
     });
 
     it('Should return an error if the user doesnt exists', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, false);
+      });
+
       let options = {
         method: 'PUT',
         url: '/projects/1/liked',
@@ -462,11 +543,16 @@ describe('User', () => {
         expect(response.result.statusCode).to.be.equal(401);
         expect(response.result.message).to.be.equal('Invalid User');
         expect(response.result.error).to.be.equal('Unauthorized');
+        stub.restore();
         done();
       });
     });
 
     it('Should return an error if the project doesnt exist', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'PUT',
         url: '/projects/214341234/liked',
@@ -479,11 +565,16 @@ describe('User', () => {
         expect(response.result.statusCode).to.be.equal(400);
         expect(response.result.message).to.be.equal('MongoDB ERROR => Inexistent Project');
         expect(response.result.error).to.be.equal('Bad Request');
+        stub.restore();
         done();
       });
     });
 
     it('Should return true if everything went OK', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'PUT',
         url: '/projects/1/liked',
@@ -495,6 +586,7 @@ describe('User', () => {
       server.inject(options, (response) => {
         expect(response.statusCode).to.be.equal(200);
         expect(response.result).to.be.equal(true);
+        stub.restore();
         done();
       });
     });
@@ -535,6 +627,10 @@ describe('User', () => {
     });
 
     it('Should return an error if no params is given', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'PUT',
         url: '/projects/ /disliked',
@@ -545,11 +641,38 @@ describe('User', () => {
 
       server.inject(options, (response) => {
         expect(response.result.statusCode).to.be.equal(400);
+        stub.restore();
+        done();
+      });
+    });
+
+    it('Should return an error if the user doesnt exists', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, false);
+      });
+
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/disliked',
+        headers: {
+          authorization: tokenHeader('DontExist'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(401);
+        expect(response.result.message).to.be.equal('Invalid User');
+        expect(response.result.error).to.be.equal('Unauthorized');
+        stub.restore();
         done();
       });
     });
 
     it('Should return an error if the project doesnt exist', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'PUT',
         url: '/projects/214341234/disliked',
@@ -562,11 +685,16 @@ describe('User', () => {
         expect(response.result.statusCode).to.be.equal(400);
         expect(response.result.message).to.be.equal('MongoDB ERROR => Inexistent Project');
         expect(response.result.error).to.be.equal('Bad Request');
+        stub.restore();
         done();
       });
     });
 
     it('Should return true if everything went OK', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'PUT',
         url: '/projects/1/disliked',
@@ -578,11 +706,16 @@ describe('User', () => {
       server.inject(options, (response) => {
         expect(response.statusCode).to.be.equal(200);
         expect(response.result).to.be.equal(true);
+        stub.restore();
         done();
       });
     });
 
     it('Should return an error if the project was already disliked by the user', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
       let options = {
         method: 'PUT',
         url: '/projects/2/disliked',
@@ -595,6 +728,7 @@ describe('User', () => {
         expect(response.result.statusCode).to.be.equal(400);
         expect(response.result.message).to.be.equal('ALready removed the like');
         expect(response.result.error).to.be.equal('Bad Request');
+        stub.restore();
         done();
       });
     });
