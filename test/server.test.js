@@ -733,4 +733,103 @@ describe('User', () => {
       });
     });
   });
+
+  describe('PUT /projects/{id}/pinned', () => {
+    it('Should be listening to PUT /projects/{id}/pinned', (done) => {
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/pinned',
+      };
+
+      server.inject(options, (response) => {
+        let res = response.raw.req;
+
+        expect(res.method).to.be.equal('PUT');
+        expect(res.url).to.be.equal('/projects/1/pinned');
+        done();
+      });
+    });
+
+    it('Should be expecting a valid token for authentication', (done) => {
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/pinned',
+        headers: {
+          authorization: invalidTokenKey('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        const result = response.result;
+        expect(result.statusCode).to.be.equal(401);
+        expect(result.error).to.be.equal('Unauthorized');
+        expect(result.message).to.be.equal('Invalid Token Signature');
+        done();
+      });
+    });
+
+    it('Should return an error if no params is given', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
+      let options = {
+        method: 'PUT',
+        url: '/projects/ /pinned',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(400);
+        expect(response.result.message).to.be.equal('Missing id params');
+        stub.restore();
+        done();
+      });
+    });
+
+    it('Should return an error if the user making the request is not valid', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, false);
+      });
+
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/pinned',
+        headers: {
+          authorization: tokenHeader('DontExist'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(401);
+        expect(response.result.message).to.be.equal('Invalid User');
+        expect(response.result.error).to.be.equal('Unauthorized');
+        stub.restore();
+        done();
+      });
+    });
+
+    it('Should return an error if the project with the given id doesnt exist', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
+      let options = {
+        method: 'PUT',
+        url: '/projects/1235234/pinned',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(400);
+        expect(response.result.message).to.be.equal('MongoDB ERROR => Inexistent Project');
+        stub.restore();
+        done();
+      });
+    });
+  });
 });
