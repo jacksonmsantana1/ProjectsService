@@ -166,16 +166,16 @@ describe('ProjectModel', () => {
     });
   });
 
-  describe('addLikes(projectId, like) ->', () => {
+  describe('addLikes(projectId, userId) ->', () => {
     it('Should return an promise', (done) => {
-      const promise = ProjectDB.addLikes(projectsDB, '1234', {});
+      const promise = ProjectDB.addLikes(projectsDB, null, null);
       expect(promise.constructor.name).to.be.equal('Promise');
       done();
     });
 
-    it('Should return an error if none like object is given', (done) => {
+    it('Should return an error if none userId object is given', (done) => {
       ProjectDB.addLikes(projectsDB, '1', null).catch((err) => {
-        expect(err.message).to.be.equal('MongoDB ERROR => Invalid Attribute:like');
+        expect(err.message).to.be.equal('MongoDB ERROR => Invalid Attribute:userId');
         done();
       });
     });
@@ -196,7 +196,7 @@ describe('ProjectModel', () => {
     });
 
     it('Should return an error if the project doesnt exist', (done) => {
-      ProjectDB.addLikes(projectsDB, '1234', { like: 'ANUS' })
+      ProjectDB.addLikes(projectsDB, '1234', ' ')
         .catch((err) => {
           expect(err.message).to.be.equal('MongoDB ERROR => Inexistent Project');
           done();
@@ -204,14 +204,22 @@ describe('ProjectModel', () => {
     });
 
     it('Should return true if everything runs OK', (done) => {
-      ProjectDB.addLikes(projectsDB, '1', { user: '1234567', creationDate: new Date() })
+      ProjectDB.addLikes(projectsDB, '1', '1234567')
         .then((ok) => {
           expect(ok).to.be.equal(true);
           return ProjectDB.getProjectById(projectsDB, '1')
         })
         .then((doc) => {
           expect(doc.id).to.be.equal('1');
-          expect(doc.liked[2].user).to.be.equal('1234567');
+          expect(doc.liked[2]).to.be.equal('1234567');
+          done();
+        });
+    });
+
+    it('Should return an error if the user already liked the project', (done) => {
+      ProjectDB.addLikes(projectsDB, '1', '1234567')
+        .catch((err) => {
+          expect(err.message).to.be.equal('Project already liked');
           done();
         });
     });
@@ -261,7 +269,7 @@ describe('ProjectModel', () => {
         })
         .then((doc) => {
           expect(doc.id).to.be.equal('1');
-          expect(doc.pinned[0]).to.be.equal('1234567');
+          expect(doc.pinned[1]).to.be.equal('1234567');
           done();
         }).catch(done);
     });
@@ -330,7 +338,7 @@ describe('ProjectModel', () => {
         .then((doc) => {
           expect(doc.liked.length).to.be.equal(1);
           done();
-        });
+        }).catch(done);
     });
   });
 
@@ -388,7 +396,7 @@ describe('ProjectModel', () => {
           expect(ok).to.be.equal(true);
           return ProjectDB.getProjectById(projectsDB, '1')
         }).then((doc) => {
-          expect(doc.pinned.length).to.be.equal(1);
+          expect(doc.pinned.length).to.be.equal(2);
           done();
         }).catch(done);
     });

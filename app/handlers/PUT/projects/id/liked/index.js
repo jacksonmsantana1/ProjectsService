@@ -44,21 +44,15 @@ const userNotOk = (err) =>
 // validateUser :: Request -> Promise(Error, Request)
 const validateUser = (request) => isUserValid(request).then(userOK(request)).catch(userNotOk);
 
-// createLike :: Request -> Object:like
-const createLike = (request) => ({
-  user: getCredential(request),
-  date: new Date(),
-});
-
 // addLikes :: Database:db -> String:projectId -> Object:like -> Promise(Error, Boolean:liked)
 const addLikes = require('../../../../../Project/index').addLikes;
 
 // addLikesToProject :: Request -> Promise(Error, Boolean:liked)
 const addLikesToProject = curry((db, request) => {
   const projectId = getParamsId(request);
-  const like = createLike(request);
+  const userId = getCredential(request);
 
-  return addLikes(db, projectId, like)
+  return addLikes(db, projectId, userId)
     .then((ok) => Promise.resolve(ok))
     .catch((err) => Promise.reject(Boom.badRequest(err.message)));
 });

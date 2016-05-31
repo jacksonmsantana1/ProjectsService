@@ -15,14 +15,8 @@ module.exports = [{
     doneByAuthor: [],
     templates: [],
   },
-  liked: [
-    {
-      id: '12873621312h13',
-      userId: '192837nx1p212234',
-      date: '06-05-2016',
-    },
-  ],
-  pinned: [],
+  liked: ['alreadyLiked'],
+  pinned: ['alreadyPinned'],
 }, {
   _id: ObjectId(),
   id: '2',
@@ -38,13 +32,7 @@ module.exports = [{
     doneByAuthor: [],
     templates: [],
   },
-  liked: [
-    {
-      id: '12873621312h13',
-      userId: '192837nx1p212234',
-      date: '06-05-2016',
-    },
-  ],
+  liked: [],
   pinned: [],
 }, {
   _id: ObjectId(),
@@ -61,13 +49,7 @@ module.exports = [{
     doneByAuthor: [],
     templates: [],
   },
-  liked: [
-    {
-      id: '12873621312h13',
-      userId: '192837nx1p212234',
-      date: '06-05-2016',
-    },
-  ],
+  liked: [],
   pinned: [],
 }, /*Invlaid Projects*/ {
   _id: ObjectId(),

@@ -186,6 +186,23 @@ const routeStart = () => server.route([{
     },
   },
   handler: require('./app/handlers/PUT/projects/id/pinned/'),
+}, {
+  method: 'PUT',
+  path: '/projects/{id}/despinned',
+  config: {
+    auth: 'default',
+    description: 'The project despinned by the user',
+    tags: ['projects', 'patchwork', 'pins'],
+    cors: {
+      origin: ['http://localhost:8080'], //FIXME Remove in production
+    },
+    validate: {
+      params: {
+        id: Joi.string().required(),
+      },
+    },
+  },
+  handler: require('./app/handlers/PUT/projects/id/despinned/'),
 },
 ]);
 

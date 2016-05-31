@@ -570,6 +570,28 @@ describe('User', () => {
       });
     });
 
+    it('Should return an error if the project was already liked by the user', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/liked',
+        headers: {
+          authorization: tokenHeader('alreadyLiked'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(400);
+        expect(response.result.message).to.be.equal('Project already liked');
+        expect(response.result.error).to.be.equal('Bad Request');
+        stub.restore();
+        done();
+      });
+    });
+
     it('Should return true if everything went OK', (done) => {
       const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
         return cb(null, { statusCode: 200 }, true);
@@ -690,27 +712,6 @@ describe('User', () => {
       });
     });
 
-    it('Should return true if everything went OK', (done) => {
-      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
-        return cb(null, { statusCode: 200 }, true);
-      });
-
-      let options = {
-        method: 'PUT',
-        url: '/projects/1/disliked',
-        headers: {
-          authorization: tokenHeader('1234567'),
-        },
-      };
-
-      server.inject(options, (response) => {
-        expect(response.statusCode).to.be.equal(200);
-        expect(response.result).to.be.equal(true);
-        stub.restore();
-        done();
-      });
-    });
-
     it('Should return an error if the project was already disliked by the user', (done) => {
       const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
         return cb(null, { statusCode: 200 }, true);
@@ -728,6 +729,27 @@ describe('User', () => {
         expect(response.result.statusCode).to.be.equal(400);
         expect(response.result.message).to.be.equal('Already removed the like');
         expect(response.result.error).to.be.equal('Bad Request');
+        stub.restore();
+        done();
+      });
+    });
+
+    it('Should return true if everything went OK', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/disliked',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.statusCode).to.be.equal(200);
+        expect(response.result).to.be.equal(true);
         stub.restore();
         done();
       });
@@ -832,6 +854,28 @@ describe('User', () => {
       });
     });
 
+    it('Should return an error if the project was already pinned by the user', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/pinned',
+        headers: {
+          authorization: tokenHeader('alreadyPinned'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(400);
+        expect(response.result.message).to.be.equal('Project already pinned');
+        expect(response.result.error).to.be.equal('Bad Request');
+        stub.restore();
+        done();
+      });
+    });
+
     it('Should return true if everything went OK', (done) => {
       const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
         return cb(null, { statusCode: 200 }, true);
@@ -842,6 +886,147 @@ describe('User', () => {
         url: '/projects/1/pinned',
         headers: {
           authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.statusCode).to.be.equal(200);
+        stub.restore();
+        done();
+      });
+    });
+  });
+
+  describe('PUT /projects/{id}/despinned', () => {
+    it('Should be listening to PUT /projects/{id}/despinned', (done) => {
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/despinned',
+      };
+
+      server.inject(options, (response) => {
+        let res = response.raw.req;
+
+        expect(res.method).to.be.equal('PUT');
+        expect(res.url).to.be.equal('/projects/1/despinned');
+        done();
+      });
+    });
+
+    it('Should be expecting a valid token for authentication', (done) => {
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/despinned',
+        headers: {
+          authorization: invalidTokenKey('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        const result = response.result;
+        expect(result.statusCode).to.be.equal(401);
+        expect(result.error).to.be.equal('Unauthorized');
+        expect(result.message).to.be.equal('Invalid Token Signature');
+        done();
+      });
+    });
+
+    it('Should return an error if no params is given', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
+      let options = {
+        method: 'PUT',
+        url: '/projects/ /despinned',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(400);
+        expect(response.result.message).to.be.equal('Missing id params');
+        stub.restore();
+        done();
+      });
+    });
+
+    it('Should return an error if the user making the request is not valid', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, false);
+      });
+
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/despinned',
+        headers: {
+          authorization: tokenHeader('DontExist'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(401);
+        expect(response.result.message).to.be.equal('Invalid User');
+        expect(response.result.error).to.be.equal('Unauthorized');
+        stub.restore();
+        done();
+      });
+    });
+
+    it('Should return an error if the project with the given id doesnt exist', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
+      let options = {
+        method: 'PUT',
+        url: '/projects/1235234/despinned',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(400);
+        expect(response.result.message).to.be.equal('MongoDB ERROR => Inexistent Project');
+        stub.restore();
+        done();
+      });
+    });
+
+    it('Should return an error if the project is not pinned', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/despinned',
+        headers: {
+          authorization: tokenHeader('notPinned'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.result.statusCode).to.be.equal(400);
+        expect(response.result.message).to.be.equal('Already removed the pin');
+        expect(response.result.error).to.be.equal('Bad Request');
+        stub.restore();
+        done();
+      });
+    });
+
+    it('Should return true if everything went OK', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/despinned',
+        headers: {
+          authorization: tokenHeader('alreadyPinned'),
         },
       };
 

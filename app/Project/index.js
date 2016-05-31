@@ -80,27 +80,27 @@ const _getProjectById = curry((db, id) =>
       .catch(reject);
   }));
 
-// _addLikes :: Database:db -> Object:like -> Promise(Error, Project)
-const _addLikes = curry((db, projectId, like) =>
+// _addLikes :: Database:db -> String:userId -> Promise(Error, Project)
+const _addLikes = curry((db, projectId, userId) =>
   new Promise((resolve, reject) => {
-    if (isEmpty(like) || isNil(like)) {
-      reject(new Error('MongoDB ERROR => Invalid Attribute:like'));
+    if (isEmpty(userId) || isNil(userId)) {
+      reject(new Error('MongoDB ERROR => Invalid Attribute:userId'));
     } else if (isNil(db) || isEmpty(db)) {
       reject(new Error('MongoDB ERROR => Inexistent DB'));
     } else if (isNil(projectId) || isEmpty(projectId)) {
       reject(new Error('MongoDB ERROR => Invalid Attribute:projectId'));
     }
 
-    db.findOneAndUpdate({ id: projectId }, { $push: { liked: like } })
-      .then((doc) => {
-        if (!doc.value) {
+    db.update({ id: projectId }, { $addToSet: { liked: userId } })
+      .then((writeResult) => {
+        if (!writeResult.result.n) {
           reject(new Error('MongoDB ERROR => Inexistent Project'));
-        } else if (!!doc.value) {
+        } else if (!!writeResult.result.nModified && !!writeResult.result.n) {
           resolve(true);
+        } else if (!writeResult.result.nModified && !!writeResult.result.n) {
+          reject(new Error('Project already liked'));
         }
-
-        reject(new Error('MongoDB ERROR => Something Occured'));
-      });
+      }).catch(reject);
   }));
 
 // _removeLikes :: Database:db -> String:projectId -> String:userId -> Promise(Error, Project)
@@ -114,7 +114,7 @@ const _removeLikes = curry((db, projectId, userId) =>
       reject(new Error('MongoDB ERROR => Invalid Attribute:projectId'));
     }
 
-    db.update({ id: projectId }, { $pull: { liked: { user: userId } } })
+    db.update({ id: projectId }, { $pull: { liked: userId } })
       .then((writeResult) => {
         if (!writeResult.result.n) {
           reject(new Error('MongoDB ERROR => Inexistent Project'));
