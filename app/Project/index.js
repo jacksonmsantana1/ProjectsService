@@ -139,16 +139,16 @@ const _addPins = curry((db, projectId, userId) =>
       reject(new Error('MongoDB ERROR => Invalid Attribute:userId'));
     }
 
-    db.update({ id: projectId }, { $push: { pinned: userId } })
+    db.update({ id: projectId }, { $addToSet: { pinned: userId } })
       .then((writeResult) => {
         if (!writeResult.result.n) {
           reject(new Error('MongoDB ERROR => Inexistent Project'));
         } else if (!!writeResult.result.nModified && !!writeResult.result.n) {
           resolve(true);
-        } else if (!writeResult.ok) {
-          reject(new Error('MongoDB Server Error'));
+        } else if (!writeResult.result.nModified && !!writeResult.result.n) {
+          reject(new Error('Project already pinned'));
         }
-      });
+      }).catch(reject);
   }));
 
 // _removePins :: Database:db -> String:projectId -> String:userId -> Promise(Error, Project)

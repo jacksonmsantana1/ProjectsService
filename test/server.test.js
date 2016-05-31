@@ -832,7 +832,7 @@ describe('User', () => {
       });
     });
 
-    it('Should return true if everything went alright', (done) => {
+    it('Should return true if everything went OK', (done) => {
       const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
         return cb(null, { statusCode: 200 }, true);
       });

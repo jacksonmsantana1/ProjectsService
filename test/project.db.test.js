@@ -265,6 +265,15 @@ describe('ProjectModel', () => {
           done();
         }).catch(done);
     });
+
+    it('Should return an error if the user already pinned the project', (done) => {
+      ProjectDB.addPins(projectsDB, '1', '1234567')
+        .then(done)
+        .catch((err) => {
+          expect(err.message).to.be.equal('Project already pinned');
+          done();
+        });
+    });
   });
 
   describe('removeLikes(projectId, userId) ->', () => {
@@ -370,16 +379,16 @@ describe('ProjectModel', () => {
     });
 
     it('Should return true if everything runs OK', (done) => {
-      ProjectDB.addPins(projectsDB, '1', '1234567')
+      ProjectDB.addPins(projectsDB, '1', '1234')
         .then((ok) => {
           expect(ok).to.be.equal(true);
-          return ProjectDB.removePins(projectsDB, '1', '1234567')
+          return ProjectDB.removePins(projectsDB, '1', '1234')
         })
         .then((ok) => {
           expect(ok).to.be.equal(true);
           return ProjectDB.getProjectById(projectsDB, '1')
         }).then((doc) => {
-          expect(doc.pinned.length).to.be.equal(0);
+          expect(doc.pinned.length).to.be.equal(1);
           done();
         }).catch(done);
     });
