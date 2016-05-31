@@ -304,6 +304,14 @@ describe('ProjectModel', () => {
         });
     });
 
+    it('Should return an error if the user already disliked the project', (done) => {
+      ProjectDB.removeLikes(projectsDB, '1', '1234')
+        .catch((err) => {
+          expect(err.message).to.be.equal('Already removed the like');
+          done();
+        });
+    });
+
     it('Should return true if everything runs OK', (done) => {
       ProjectDB.removeLikes(projectsDB, '1', '1234567')
         .then((ok) => {
@@ -314,6 +322,66 @@ describe('ProjectModel', () => {
           expect(doc.liked.length).to.be.equal(1);
           done();
         });
+    });
+  });
+
+  describe('removePins(projectId, userId) ->', () => {
+    it('Should return a promise', (done) => {
+      expect(ProjectDB.removePins('db', 'projctId', 'userId').constructor.name).to.be.equal('Promise');
+      done();
+    });
+
+    it('Should return an error if none database is given', (done) => {
+      ProjectDB.removePins(null, '1234', '1234')
+        .catch((err) => {
+          expect(err.message).to.be.equal('MongoDB ERROR => Inexistent DB');
+          done();
+        });
+    });
+
+    it('Should return an error if none project id is given', (done) => {
+      ProjectDB.removePins(projectsDB, '', '1234').catch((err) => {
+        expect(err.message).to.be.equal('MongoDB ERROR => Invalid Attribute:projectId');
+        done();
+      });
+    });
+
+    it('Should return an error if none userId id is given', (done) => {
+      ProjectDB.removePins(projectsDB, { like: 'ANUS'}, null).catch((err) => {
+        expect(err.message).to.be.equal('MongoDB ERROR => Invalid Attribute:userId');
+        done();
+      });
+    });
+
+    it('Should return an error if the project doesnt exist', (done) => {
+      ProjectDB.removePins(projectsDB, '1234', '1234')
+        .catch((err) => {
+          expect(err.message).to.be.equal('MongoDB ERROR => Inexistent Project');
+          done();
+        });
+    });
+
+    it('Should return an error if the user already despinned the project', (done) => {
+      ProjectDB.removePins(projectsDB, '1', '1234')
+        .catch((err) => {
+          expect(err.message).to.be.equal('Already removed the pin');
+          done();
+        });
+    });
+
+    it('Should return true if everything runs OK', (done) => {
+      ProjectDB.addPins(projectsDB, '1', '1234567')
+        .then((ok) => {
+          expect(ok).to.be.equal(true);
+          return ProjectDB.removePins(projectsDB, '1', '1234567')
+        })
+        .then((ok) => {
+          expect(ok).to.be.equal(true);
+          return ProjectDB.getProjectById(projectsDB, '1')
+        }).then((doc) => {
+          expect(doc.pinned.length).to.be.equal(0);
+          done();
+        }).catch(done);
     });
   });
 });

@@ -119,7 +119,7 @@ const _removeLikes = curry((db, projectId, userId) =>
         if (!writeResult.result.n) {
           reject(new Error('MongoDB ERROR => Inexistent Project'));
         } else if (!writeResult.result.nModified && !!writeResult.result.n) {
-          reject(new Error('ALready removed the like'));
+          reject(new Error('Already removed the like'));
         } else if (!!writeResult.result.nModified && !!writeResult.result.n) {
           resolve(true);
         } else if (!writeResult.ok) {
@@ -128,6 +128,7 @@ const _removeLikes = curry((db, projectId, userId) =>
       });
   }));
 
+// _addPins :: Database:db -> String:projectId -> String:userId -> Promise
 const _addPins = curry((db, projectId, userId) =>
   new Promise((resolve, reject) => {
     if (isNil(db) || isEmpty(db)) {
@@ -150,10 +151,36 @@ const _addPins = curry((db, projectId, userId) =>
       });
   }));
 
+// _removePins :: Database:db -> String:projectId -> String:userId -> Promise(Error, Project)
+const _removePins = curry((db, projectId, userId) =>
+  new Promise((resolve, reject) => {
+    if (isEmpty(userId) || isNil(userId)) {
+      reject(new Error('MongoDB ERROR => Invalid Attribute:userId'));
+    } else if (isNil(db) || isEmpty(db)) {
+      reject(new Error('MongoDB ERROR => Inexistent DB'));
+    } else if (isNil(projectId) || isEmpty(projectId)) {
+      reject(new Error('MongoDB ERROR => Invalid Attribute:projectId'));
+    }
+
+    db.update({ id: projectId }, { $pull: { pinned: userId } })
+      .then((writeResult) => {
+        if (!writeResult.result.n) {
+          reject(new Error('MongoDB ERROR => Inexistent Project'));
+        } else if (!writeResult.result.nModified && !!writeResult.result.n) {
+          reject(new Error('Already removed the pin'));
+        } else if (!!writeResult.result.nModified && !!writeResult.result.n) {
+          resolve(true);
+        } else if (!writeResult.ok) {
+          reject(new Error('MongoDB Server Error'));
+        }
+      });
+  }));
+
 module.exports = {
   getProjects: _getProjects,
   getProjectById: _getProjectById,
   addLikes: _addLikes,
   removeLikes: _removeLikes,
   addPins: _addPins,
+  removePins: _removePins,
 };

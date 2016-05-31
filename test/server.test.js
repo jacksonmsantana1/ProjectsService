@@ -726,7 +726,7 @@ describe('User', () => {
 
       server.inject(options, (response) => {
         expect(response.result.statusCode).to.be.equal(400);
-        expect(response.result.message).to.be.equal('ALready removed the like');
+        expect(response.result.message).to.be.equal('Already removed the like');
         expect(response.result.error).to.be.equal('Bad Request');
         stub.restore();
         done();
