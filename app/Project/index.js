@@ -128,9 +128,32 @@ const _removeLikes = curry((db, projectId, userId) =>
       });
   }));
 
+const _addPins = curry((db, projectId, userId) =>
+  new Promise((resolve, reject) => {
+    if (isNil(db) || isEmpty(db)) {
+      reject(new Error('MongoDB ERROR => Inexistent DB'));
+    } else if (isNil(projectId) || isEmpty(projectId)) {
+      reject(new Error('MongoDB ERROR => Invalid Attribute:projectId'));
+    } else if (isNil(userId) || isEmpty(userId)) {
+      reject(new Error('MongoDB ERROR => Invalid Attribute:userId'));
+    }
+
+    db.update({ id: projectId }, { $push: { pinned: userId } })
+      .then((writeResult) => {
+        if (!writeResult.result.n) {
+          reject(new Error('MongoDB ERROR => Inexistent Project'));
+        } else if (!!writeResult.result.nModified && !!writeResult.result.n) {
+          resolve(true);
+        } else if (!writeResult.ok) {
+          reject(new Error('MongoDB Server Error'));
+        }
+      });
+  }));
+
 module.exports = {
   getProjects: _getProjects,
   getProjectById: _getProjectById,
   addLikes: _addLikes,
   removeLikes: _removeLikes,
+  addPins: _addPins,
 };

@@ -217,6 +217,56 @@ describe('ProjectModel', () => {
     });
   });
 
+  describe('addPins(projectId, userId) ->', () => {
+    it('Should return a promise', (done) => {
+      expect(ProjectDB.addPins('db', 'projctId', 'userId').constructor.name).to.be.equal('Promise');
+      done();
+    });
+
+    it('Should return an error if none database is given', (done) => {
+      ProjectDB.addPins(null, '1234', { like: 'ANUS' })
+        .catch((err) => {
+          expect(err.message).to.be.equal('MongoDB ERROR => Inexistent DB');
+          done();
+        });
+    });
+
+    it('Should return an error if none project id is given', (done) => {
+      ProjectDB.addPins(projectsDB, '', { like: 'ANUS'}).catch((err) => {
+        expect(err.message).to.be.equal('MongoDB ERROR => Invalid Attribute:projectId');
+        done();
+      });
+    });
+
+    it('Should return an error if none userId id is given', (done) => {
+      ProjectDB.addPins(projectsDB, { like: 'ANUS'}, null).catch((err) => {
+        expect(err.message).to.be.equal('MongoDB ERROR => Invalid Attribute:userId');
+        done();
+      });
+    });
+
+    it('Should return an error if the project doesnt exist', (done) => {
+      ProjectDB.addPins(projectsDB, '1234', { like: 'ANUS' })
+        .catch((err) => {
+          expect(err.message).to.be.equal('MongoDB ERROR => Inexistent Project');
+          done();
+        });
+    });
+
+    it('Should return true if everything runs OK', (done) => {
+      ProjectDB.addPins(projectsDB, '1', '1234567')
+        .then((ok) => {
+          expect(ok).to.be.equal(true);
+          return ProjectDB.getProjectById(projectsDB, '1')
+        })
+        .then((doc) => {
+          expect(doc.id).to.be.equal('1');
+          expect(doc.pinned[0]).to.be.equal('1234567');
+          done();
+        }).catch(done);
+    });
+  });
+
   describe('removeLikes(projectId, userId) ->', () => {
     it('Should return an promise', (done) => {
       const promise = ProjectDB.removeLikes(projectsDB, '1234', {});

@@ -16,4 +16,5 @@ module.exports = Joi.object().keys({
     templates: Joi.array(),
   }),
   liked: Joi.array().unique(),
+  pinned: Joi.array().unique(),
 });

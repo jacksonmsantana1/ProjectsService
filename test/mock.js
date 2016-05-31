@@ -22,6 +22,7 @@ module.exports = [{
       date: '06-05-2016',
     },
   ],
+  pinned: [],
 }, {
   _id: ObjectId(),
   id: '2',
@@ -44,6 +45,7 @@ module.exports = [{
       date: '06-05-2016',
     },
   ],
+  pinned: [],
 }, {
   _id: ObjectId(),
   id: 's2783js10293ns1zn302',
@@ -66,6 +68,7 @@ module.exports = [{
       date: '06-05-2016',
     },
   ],
+  pinned: [],
 }, /*Invlaid Projects*/ {
   _id: ObjectId(),
   id: '1',
