@@ -38,29 +38,30 @@ const validateUser = curry((request, ok) =>
 // getRequestParams :: Request -> String
 const getRequestParams = compose(get('id'), get('params'));
 
-// isRequestParamsValid :: String:params -> Promise(Error, String:params)
-const isRequestParamsValid = (params) =>
+// isRequestParamsValid :: Request -> Promise(Error, Request)
+const isRequestParamsValid = (request) =>
   new Promise((resolve, reject) => {
-    if (isNil(params) || isEmpty(params.trim())) {
+    if (isNil(request.params.id) || isEmpty(request.params.id.trim())) {
       reject(Boom.badRequest('Missing id params'));
     }
 
-    resolve(params);
+    resolve(request);
   });
 
-// getProjectById :: Database:db -> String:params -> Promise(Error, Project)
-const getProjectById = require('../../../../../Project/index').getProjectById;
+// addPins :: Database:db -> String:projectId -> String:userId -> Promise(Error, Boolean)
+const addPins = require('../../../../../Project/index').addPins;
 
-// getProject :: Database:db -> String:params -> Promise(Error, Project)
-const getProject = curry((db, params) => getProjectById(db, params)
-  .then((project) => Promise.resolve(project))
-  .catch((err) => Promise.reject(Boom.badRequest(err.message))));
+// pin :: Database:db -> Request -> Promise(Error, Boolean)
+const pin = curry((db, request) =>
+  addPins(db, getRequestParams(request), getCredential(request))
+    .then((ok) => Promise.resolve(ok))
+    .catch((err) => Promise.reject(Boom.badRequest(err.message))));
 
-// sendResponse :: Request -> Response -> String -> Response(Boolean)
-const sendResponse = curry((request, reply, pid) => {
+// sendResponse :: Request -> Response -> Boolean -> Response(Boolean)
+const sendResponse = curry((request, reply, ok) => {
   request.log('/projects/{id}/pinned',
     logMessage(request.id, true, request.auth.credentials.id, request.path, 'OK 200'));
-  reply(!!pid);
+  reply(ok);
 });
 
 // sendError :: Request -> Response -> Error -> Response(Error)
@@ -79,9 +80,8 @@ module.exports = (request, reply) => {
   isAuthenticated(request)
     .then(isUserValid)
     .then(validateUser(request))
-    .then(getRequestParams)
     .then(isRequestParamsValid)
-    .then(getProject(collection))
+    .then(pin(collection))
     .then(sendResponse(request, reply))
     .catch(sendError(request, reply));
 };

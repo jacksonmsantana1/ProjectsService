@@ -831,5 +831,25 @@ describe('User', () => {
         done();
       });
     });
+
+    it('Should return true if everything went alright', (done) => {
+      const stub = sinon.stub(Wreck, 'get', (uri, options, cb) => {
+        return cb(null, { statusCode: 200 }, true);
+      });
+
+      let options = {
+        method: 'PUT',
+        url: '/projects/1/pinned',
+        headers: {
+          authorization: tokenHeader('1234567'),
+        },
+      };
+
+      server.inject(options, (response) => {
+        expect(response.statusCode).to.be.equal(200);
+        stub.restore();
+        done();
+      });
+    });
   });
 });
