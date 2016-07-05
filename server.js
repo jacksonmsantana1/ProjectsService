@@ -50,7 +50,9 @@ const goodConfig = {
 
 const mongoConfig = (process.env.NODE_ENV === 'test') ?
   require('./app/plugins/mongodb/config.js').test :
-  require('./app/plugins/mongodb/config').postman;
+  (process.env.NODE_ENV === 'dev') ?
+    require('./app/plugins/mongodb/config.js').dev :
+    require('./app/plugins/mongodb/config').postman;
 
 /*********************************Plugins**********************************/
 
